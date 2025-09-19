@@ -426,3 +426,52 @@ logging:
 - Include API versioning
 - Add comprehensive unit tests
 - Implement caching strategy
+
+## Testing on Postman
+
+```javascript
+// ✅ Check for 201 Created
+pm.test("Status code is 201", function () {
+    pm.response.to.have.status(201);
+});
+
+// ✅ Check for correct content type
+pm.test("Response is XML", function () {
+    pm.expect(pm.response.headers.get("Content-Type")).to.include("application/xml");
+});
+
+// ✅ Convert XML to JSON (Postman built-in helper)
+const jsonData = xml2Json(pm.response.text());
+
+// ✅ Validate response content
+pm.test("User created with correct data", function () {
+    pm.expect(jsonData.user.name).to.eql("Jane Smith");
+    pm.expect(jsonData.user.email).to.eql("jane.smith3@example.com");
+    pm.expect(jsonData.user.active).to.eql("true");
+    pm.expect(jsonData.user.id).to.exist;
+});
+
+// ✅ Define expected schema
+const userSchema = {
+    type: "object",
+    required: ["user"],
+    properties: {
+        user: {
+            type: "object",
+            required: ["id", "name", "email", "active"],
+            properties: {
+                id: { type: "string", pattern: "^[0-9]+$" },
+                name: { type: "string" },
+                email: { type: "string", format: "email" },
+                phone: { type: "string" },
+                address: { type: "string" },
+                active: { type: "string", enum: ["true", "false"] }
+            }
+        }
+    }
+};
+
+// ✅ Validate schema using Postman built-in
+pm.test("Response matches user schema", function () {
+    pm.expect(jsonData).to.have.jsonSchema(userSchema);
+});
